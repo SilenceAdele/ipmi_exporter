@@ -17,6 +17,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/bougou/go-ipmi/pkg/oem/iana"
 	ipmitypes "github.com/bougou/go-ipmi/pkg/types"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -76,12 +77,17 @@ func (c BMCNativeCollector) Collect(_ freeipmi.Result, ch chan<- prometheus.Metr
 		systemFirmwareVersion = systemInfo.ToSystemInfo().SystemFirmwareVersion
 	}
 
+	manufacturerName := "Unknown"
+	if name, ok := iana.Lookup(res.ManufacturerID); ok {
+		manufacturerName = name
+	}
+
 	ch <- prometheus.MustNewConstMetric(
 		bmcNativeInfoDesc,
 		prometheus.GaugeValue,
 		1,
 		res.FirmwareVersionStr(),
-		ipmitypes.OEM(res.ManufacturerID).String(),
+		manufacturerName,
 		strconv.FormatUint(uint64(res.ManufacturerID), 10),
 		systemFirmwareVersion,
 	)
